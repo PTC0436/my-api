@@ -19,11 +19,14 @@ async function startServer() {
 
     const db = client.db("mydb");
     const users = db.collection("users");
+    const shoes = db.collection("shoes");
 
     // Test route
     app.get("/", (req, res) => {
       res.send("API is running...");
     });
+
+    // Users
 
     // CREATE
     app.post("/users", async (req, res) => {
@@ -85,6 +88,81 @@ async function startServer() {
     app.delete("/users/:id", async (req, res) => {
       try {
         const result = await users.deleteOne({
+          _id: new ObjectId(req.params.id),
+        });
+
+        if (result.deletedCount === 0) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json({ message: "User deleted successfully" });
+      } catch (err) {
+        res.status(400).json({ error: "Invalid ID format" });
+      }
+    });
+
+    // SHOES
+
+    // CREATE
+    app.post("/shoes", async (req, res) => {
+      try {
+        const result = await shoes.insertOne(req.body);
+        res.status(201).json(result);
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
+    });
+
+    // READ ALL
+    app.get("/shoes", async (req, res) => {
+      try {
+        const data = await shoes.find().toArray();
+        res.json(data);
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
+    });
+
+    // READ ONE
+    app.get("/shoes/:id", async (req, res) => {
+      try {
+        const user = await shoes.findOne({
+          _id: new ObjectId(req.params.id),
+        });
+
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json(user);
+      } catch (err) {
+        res.status(400).json({ error: "Invalid ID format" });
+      }
+    });
+
+    // UPDATE (PATCH)
+    app.patch("/shoes/:id", async (req, res) => {
+      try {
+        const result = await shoes.findOneAndUpdate(
+          { _id: new ObjectId(req.params.id) },
+          { $set: req.body },
+          { returnDocument: "after" },
+        );
+
+        if (!result.value) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json(result.value);
+      } catch (err) {
+        res.status(400).json({ error: "Invalid ID format" });
+      }
+    });
+
+    // DELETE
+    app.delete("/shoes/:id", async (req, res) => {
+      try {
+        const result = await shoes.deleteOne({
           _id: new ObjectId(req.params.id),
         });
 
